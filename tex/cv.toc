@@ -1,0 +1,21 @@
+\contentsline {section}{\numberline {1}Introduction: The Challenge of Traffic Sign Recognition}{3}{section.1}%
+\contentsline {section}{\numberline {2}Dataset: German Traffic Sign Recognition Benchmark (GTSRB)}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Dataset Composition}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Image Characteristics}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Annotation File Structure}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Further Information}{4}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Methodology 1: Classical Computer Vision Techniques}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Histogram of Oriented Gradients (HOG)}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Scale-Invariant Feature Transform (SIFT)}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Sobel Edge Detection}{5}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Support Vector Machine (SVM) Classifier}{5}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Methodology 2: Deep Learning with Convolutional Neural Networks (CNNs)}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}CNN Architecture: \texttt {SimpleResCNN}}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Dataset Handling: \texttt {GTSRBDataset} Class}{6}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Loss Functions and Optimizer}{7}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Experimental Setup and Results (CNN)}{7}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Supplementary Visualization: K-Means Clustering for Image Segmentation}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Theory of K-Means Clustering}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Application and Visualization}{7}{subsection.5.2}%
+\contentsline {section}{\numberline {6}Comparative Analysis: Classical SVM vs. Deep Learning CNN}{8}{section.6}%
+\contentsline {section}{\numberline {7}Conclusion}{8}{section.7}%

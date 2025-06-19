@@ -1,0 +1,288 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{enumitem}
+% \usepackage{setspace} % Uncomment if you need custom line spacing
+
+% --- Page Layout ---
+\geometry{margin=1in}
+
+% --- Hyperref Setup ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Traffic Sign Recognition Project Documentation},
+    breaklinks=true
+}
+
+% --- Optional: Listings Setup for code ---
+% \usepackage{xcolor}
+% \lstset{
+%     language=Python,
+%     basicstyle=\ttfamily\footnotesize,
+%     keywordstyle=\color{blue},
+%     commentstyle=\color{green!50!black},
+%     stringstyle=\color{purple},
+%     showstringspaces=false,
+%     breaklines=true,
+%     captionpos=b,
+%     frame=single,
+%     numbers=left,
+%     numberstyle=\tiny\color{gray}
+% }
+\title{Traffic Sign Recognition Project Documentation}
+\author{Theodoros Milad , Mohammed Marzouk} 
+
+% \date{\today}
+
+% Define a command for the university info with proper formatting
+\newcommand{\universityinfo}{
+    \begin{center}
+        \large Helwan University\\
+        Faculty of Computer and Artificial Intelligence\\
+        Department of Artificial Intelligence
+    \end{center}
+}
+
+\begin{document}
+
+\maketitle
+\universityinfo
+
+\begin{abstract}
+This document details a project focused on the recognition of traffic signs. A system was developed capable of image input, identification of traffic sign class, and visualization of underlying computer vision processes. This report discusses the problem domain, the dataset utilized (German Traffic Sign Recognition Benchmark), and the primary image processing methodologies implemented, including classical feature-based approaches and a Convolutional Neural Network (CNN). Comparative analysis of these methods is also presented.
+
+\vspace{1em}
+\begin{center}
+\textbf{Contributors}
+\begin{itemize}[noitemsep, topsep=1pt, align=center]
+\item  Ammar El Gohary
+\item  Mohammed Adel
+\item Mohammed Essam
+\item Mohammed Rezk 
+\item Youssef Safwat
+\item Mustafa Darweesh
+\end{itemize}
+\end{center}
+\end{abstract}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+\section{Introduction: The Challenge of Traffic Sign Recognition}
+
+Automated traffic sign recognition (TSR) is a critical component for Advanced Driver Assistance Systems (ADAS) and autonomous vehicle navigation. These systems rely on accurately interpreting road signs to make informed decisions, such as adhering to speed limits, recognizing stop or yield conditions, and understanding lane directives.
+
+However, robust TSR in real-world scenarios presents numerous challenges:
+\begin{itemize}
+    \item \textbf{Illumination Variability:} Signs may appear under diverse lighting conditions, from bright daylight to shadowed areas or nighttime, affecting their visual appearance.
+    \item \textbf{Adverse Weather Conditions:} Rain, fog, snow, or hail can obscure signs, reduce visibility, and degrade image quality.
+    \item \textbf{Occlusion and Damage:} Signs can be partially occluded by objects (e.g., foliage, other vehicles) or may be physically damaged, faded, or defaced.
+    \item \textbf{Viewpoint and Scale Variations:} Signs are observed from various distances and angles, leading to significant changes in their apparent size and perspective distortion.
+    \item \textbf{Intra-class Variability:} Even within the same sign class, variations in design, material, and age can exist.
+\end{itemize}
+This project addresses these challenges by developing and evaluating systems for classifying traffic signs from images.
+
+\section{Dataset: German Traffic Sign Recognition Benchmark (GTSRB)}
+
+The primary dataset employed for training and evaluating the TSR systems is the German Traffic Sign Recognition Benchmark (GTSRB). This dataset is a widely used standard in the field, originally introduced as part of the IJCNN 2011 competition.
+
+\subsection{Dataset Composition}
+The GTSRB training set is structured as follows:
+\begin{itemize}
+    \item \textbf{Class-Specific Directories:} The dataset comprises 43 distinct classes of traffic signs, with each class housed in a separate directory (named \texttt{00000} through \texttt{00042}).
+    \item \textbf{Training Images:} Each directory contains numerous images corresponding to its specific traffic sign class.
+    \item \textbf{Annotation Files:} Accompanying each class directory is a CSV (Comma Separated Value) file providing annotations for the images (e.g., \texttt{GT-00000.csv}).
+\end{itemize}
+
+\subsection{Image Characteristics}
+\begin{itemize}
+    \item \textbf{Format:} Images are provided in the PPM (Portable PixMap) format, representing RGB color.
+    \item \textbf{Naming Convention:} Image filenames follow the pattern \texttt{XXXXX\_YYYYY.ppm}.
+        \begin{itemize}
+            \item \texttt{XXXXX}: Denotes the track number. Images sharing the same track number originate from the same physical traffic sign, potentially captured under slightly different conditions or viewpoints in sequence.
+            \item \texttt{YYYYY}: A sequential running number for images within a given track, preserving temporal order.
+        \end{itemize}
+\end{itemize}
+
+\subsection{Annotation File Structure}
+Annotations are stored in CSV files, using a semicolon (\texttt{;}) as the field delimiter. Each record provides metadata for an image:
+\begin{itemize}
+    \item \texttt{Filename}: The name of the image file.
+    \item \texttt{Width}, \texttt{Height}: The dimensions of the image in pixels.
+    \item \texttt{Roi.x1}, \texttt{Roi.y1}, \texttt{Roi.x2}, \texttt{Roi.y2}: Coordinates defining the Region of Interest (ROI) that bounds the traffic sign within the image. The dataset specifies that these ROIs include a border around the sign (approximately 10\% of the sign's size, with a minimum of 5 pixels).
+    \item \texttt{ClassId}: The numerical identifier for the traffic sign class (0-42).
+\end{itemize}
+
+\subsection{Further Information}
+Additional details regarding the GTSRB can be found on the official benchmark website: \url{http://benchmark.ini.rub.de/}.
+
+\section{Methodology 1: Classical Computer Vision Techniques}
+The initial approach involved traditional computer vision methods for feature extraction, followed by a Support Vector Machine (SVM) for classification.
+
+\subsection{Histogram of Oriented Gradients (HOG)}
+\begin{itemize}
+    \item \textbf{Principle:} HOG features describe local object appearance and shape by the distribution of intensity gradients or edge directions. The image is divided into small connected regions (cells), and for each cell, a histogram of gradient directions for the pixels within the cell is compiled. These histograms are then contrast-normalized by grouping cells into larger blocks.
+    \item \textbf{Relevance to TSR:} Traffic signs possess distinct shapes and edge structures that HOG can effectively capture, offering a degree of invariance to illumination and minor geometric variations.
+    \item \textbf{Implementation (\texttt{skimage.feature.hog}):}
+        Key parameters included:
+        \begin{itemize}
+            \item \texttt{pixels\_per\_cell=(8, 8)}: Defines the size of individual cells for gradient orientation histograms.
+            \item \texttt{cells\_per\_block=(2, 2)}: Specifies the number of cells to group into a block for normalization.
+            \item \texttt{block\_norm='L2-Hys'}: The normalization method applied to blocks (L2-Hysteresis).
+            \item \texttt{visualize=True}: Enables generation of a visual representation of the HOG features.
+            \item \texttt{feature\_vector=True}: Returns the HOG features as a flattened 1D array suitable for classifiers.
+        \end{itemize}
+    \item \textbf{Mechanism:} The HOG descriptor is formed by concatenating the normalized histograms from all blocks in the detection window.
+\end{itemize}
+
+\subsection{Scale-Invariant Feature Transform (SIFT)}
+\begin{itemize}
+    \item \textbf{Principle:} SIFT is an algorithm to detect and describe local features (keypoints) in images. SIFT keypoints are designed to be invariant to image scale, rotation, and partially invariant to changes in illumination and 3D viewpoint. Each keypoint is described by a high-dimensional vector representing the local image structure.
+    \item \textbf{Relevance to TSR:} While not the primary classification feature in this SVM pipeline, SIFT keypoints are valuable for tasks like image matching or object recognition under varying conditions. They were visualized to illustrate robust local feature detection.
+    \item \textbf{Implementation (\texttt{cv2.SIFT\_create} and \texttt{detectAndCompute}):}
+        The process involves:
+        \begin{enumerate}
+            \item Keypoint Detection: Identifying stable interest points across different scales of the image (using Difference of Gaussians).
+            \item Keypoint Localization: Refining keypoint locations and eliminating unstable ones.
+            \item Orientation Assignment: Assigning one or more orientations to each keypoint based on local image gradient directions.
+            \item Descriptor Generation: Computing a local image descriptor for the region around each keypoint, based on oriented gradient histograms.
+        \end{enumerate}
+\end{itemize}
+
+\subsection{Sobel Edge Detection}
+\begin{itemize}
+    \item \textbf{Principle:} The Sobel operator performs a 2D spatial gradient measurement on an image, emphasizing regions of high spatial frequency that correspond to edges. It uses two convolution kernels (one for horizontal changes, one for vertical) to approximate the gradient components.
+    \item \textbf{Relevance to TSR:} Edge information is fundamental for defining the shape and boundaries of traffic signs. Sobel edges were visualized to show this structural information.
+    \item \textbf{Implementation (\texttt{cv2.Sobel}):}
+        \begin{itemize}
+            \item Applied to a grayscale image.
+            \item \texttt{cv2.CV\_64F}: Output image depth to handle potential negative gradient values.
+            \item Derivatives calculated separately for x (\texttt{dx=1, dy=0}) and y (\texttt{dx=0, dy=1}) directions.
+            \item Kernel size typically 3 (\texttt{ksize=3}).
+            \item The gradient magnitudes from \texttt{sobelx} and \texttt{sobely} are combined using \texttt{cv2.magnitude(sobelx, sobely)}.
+            \item The resulting magnitude image is normalized to the 0-255 range for visualization.
+        \end{itemize}
+\end{itemize}
+
+\subsection{Support Vector Machine (SVM) Classifier}
+The HOG features extracted from the training images were used to train an SVM classifier. SVMs are supervised learning models that find an optimal hyperplane to separate data points of different classes in a high-dimensional space.
+\begin{itemize}
+    \item \textbf{Training Hardware:} CPU.
+    \item \textbf{Training Time:} Approximately 1.30 seconds.
+    \item \textbf{Test Accuracy (Classification):} Achieved 80.1\%.
+\end{itemize}
+
+\section{Methodology 2: Deep Learning with Convolutional Neural Networks (CNNs)}
+A second approach utilized a CNN, which can learn hierarchical features directly from raw pixel data, integrating feature extraction and classification.
+
+\subsection{CNN Architecture: \texttt{SimpleResCNN}}
+A custom CNN architecture, named \texttt{SimpleResCNN}, was implemented. This architecture includes convolutional layers, batch normalization, ReLU activations, max-pooling layers, and a residual connection.
+The network comprises:
+\begin{enumerate}
+    \item \textbf{Input Layer:} Accepts images (e.g., $64 \times 64 \times 3$).
+    \item \textbf{Initial Convolutional Block (\texttt{conv1}):} Two convolutional layers (32 filters, kernel $3 \times 3$) with batch normalization and ReLU, followed by max pooling. (Output e.g., $32 \times 32 \times 32$)
+    \item \textbf{Residual Convolutional Block (\texttt{conv2\_main}, \texttt{conv2\_skip}):} A main path with two convolutional layers (64 filters, kernel $3 \times 3$) and a skip connection (\texttt{Conv2d} with $1 \times 1$ kernel) to enable residual learning. Followed by ReLU and max pooling. (Output e.g., $16 \times 16 \times 64$)
+    \item \textbf{Final Convolutional Block (\texttt{conv3}):} Two convolutional layers (128 filters, kernel $3 \times 3$) with batch normalization and ReLU, followed by max pooling. (Output e.g., $8 \times 8 \times 128$)
+    \item \textbf{Global Average Pooling (\texttt{gap}):} Reduces spatial dimensions to $1 \times 1$ per feature map.
+    \item \textbf{Output Heads (Fully Connected Layers):}
+        \begin{itemize}
+            \item \textbf{Classification Head (\texttt{fc\_class}):} Linear layer mapping pooled features to \texttt{num\_classes} (43 for GTSRB).
+            \item \textbf{Bounding Box Regression Head (\texttt{fc\_bbox}):} Linear layer mapping pooled features to 4 outputs (for normalized bounding box coordinates, e.g., $x1, y1, x2, y2$).
+        \end{itemize}
+\end{enumerate}
+This multi-head architecture allows the network to perform both classification and localization (bounding box prediction) tasks simultaneously.
+
+\subsection{Dataset Handling: \texttt{GTSRBDataset} Class}
+A custom PyTorch \texttt{Dataset} class (\texttt{GTSRBDataset}) was implemented to load and preprocess images from the GTSRB dataset.
+Key functionalities:
+\begin{itemize}
+    \item Loads image paths and annotations (labels, bounding boxes) for training or testing splits.
+    \item Processes each image: reads, resizes (e.g., to $64 \times 64$), normalizes pixel values (to [0, 1]), and converts to grayscale if needed for specific feature extractors (though the CNN typically uses color images).
+    \item Converts images to PyTorch tensors in CHW (Channels, Height, Width) format.
+    \item Normalizes bounding box coordinates to a [0, 1] range relative to the image dimensions.
+    \item Optionally, it can be configured to extract and return classical features like HOG or SIFT, though for the CNN, raw (or transformed) image tensors are primary.
+\end{itemize}
+PyTorch \texttt{DataLoader} was used to create batches of data for training and evaluation.
+
+\subsection{Loss Functions and Optimizer}
+\begin{itemize}
+    \item \textbf{Classification Loss:} Cross-Entropy Loss (\texttt{nn.CrossEntropyLoss}).
+    \item \textbf{Bounding Box Regression Loss:} Smooth L1 Loss (\texttt{nn.SmoothL1Loss}).
+    \item \textbf{Combined Loss:} $L_{total} = L_{cls} + L_{box}$ (assuming equal weighting).
+    \item \textbf{Optimizer:} AdamW (\texttt{optim.AdamW}) with a learning rate of $1 \times 10^{-3}$.
+\end{itemize}
+
+\subsection{Experimental Setup and Results (CNN)}
+\begin{itemize}
+    \item \textbf{Hardware:} Training performed on a GPU (NVIDIA CUDA).
+    \item \textbf{Framework:} PyTorch.
+    \item \textbf{Training Epochs:} 5.
+    \item \textbf{Batch Size:} 128.
+    \item \textbf{Training Time:} Approximately 2 minutes 30 seconds for 5 epochs.
+    \item \textbf{Performance:}
+        \begin{itemize}
+            \item \textbf{Training Accuracy (Classification):} 99.9\%.
+            \item \textbf{Test Accuracy (Classification):} 96.84\%.
+            \item \textbf{Bounding Box Prediction:} The model concurrently predicted bounding boxes.
+        \end{itemize}
+\end{itemize}
+
+\section{Supplementary Visualization: K-Means Clustering for Image Segmentation}
+K-Means clustering was applied as an unsupervised method for image segmentation, primarily for visualization purposes.
+
+\subsection{Theory of K-Means Clustering}
+K-Means aims to partition $n$ data points into $k$ distinct clusters. Each data point is assigned to the cluster with the nearest mean (centroid). The algorithm iteratively:
+\begin{enumerate}
+    \item Initializes $k$ centroids.
+    \item Assigns each data point to its closest centroid.
+    \item Recalculates each centroid as the mean of all points assigned to it.
+\end{enumerate}
+This process repeats until convergence. For image segmentation, pixels (represented by their color vectors, e.g., RGB) are the data points.
+
+\subsection{Application and Visualization}
+The \texttt{segment\_image\_kmeans} function (using \texttt{sklearn.cluster.KMeans}) reshapes the image pixels into a 2D array, applies K-Means to group pixels by color similarity into $k$ clusters (e.g., $k=4$ or $k=10$ in experiments), and then reconstructs the image where each pixel is colored by its assigned cluster's centroid. This produces a segmented version of the image, highlighting dominant color regions.
+
+\section{Comparative Analysis: Classical SVM vs. Deep Learning CNN}
+Table \ref{tab:comparison} summarizes the comparison between the two approaches.
+
+\begin{table}[h!]
+    \centering
+    \caption{Comparison of Classical SVM and Deep Learning CNN Approaches.}
+    \label{tab:comparison}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Aspect} & \textbf{Classical SVM with HOG} & \textbf{Deep Learning CNN (\texttt{SimpleResCNN})} \\
+        \midrule
+        Feature Engineering & Manual (HOG) & Automatic (Learned by network) \\
+        Model Complexity & Relatively Lower & Higher \\
+        Training Hardware & CPU & GPU (CUDA) \\
+        Training Time (approx.) & 1.30 seconds & 2 min 30 sec (5 epochs) \\
+        Test Accuracy (Class.) & 80.1\% & \textbf{96.84\%} \\
+        Bounding Box Prediction & No (Separate algorithm needed) & \textbf{Yes (Integrated)} \\
+        Interpretability & HOG features somewhat interpretable & ``Black box'' (generally) \\
+        Data Requirement & Effective with moderate data & Benefits from larger datasets \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Discussion:}
+The CNN (\texttt{SimpleResCNN}) significantly outperformed the SVM in classification accuracy (96.84\% vs. 80.1\%). This highlights the ability of deep networks to learn highly discriminative features. The CNN also integrated bounding box prediction, a crucial advantage. While the SVM trained faster on CPU for its specific task, the CNN's training on GPU, though longer per epoch, achieved a much more comprehensive solution. The CNN automates feature learning, whereas the classical method relies on hand-crafted HOG features.
+
+\section{Conclusion}
+This project demonstrated two approaches to GTSRB traffic sign recognition. The classical SVM with HOG features provided a baseline, achieving 80.1\% test accuracy. The \texttt{SimpleResCNN} deep learning model significantly improved upon this, reaching 96.84\% test accuracy and concurrently performing bounding box regression. This underscores the power of CNNs for complex visual recognition tasks. K-Means clustering was also explored for unsupervised segmentation visualization. The CNN approach, despite requiring GPU resources, offers a more robust and functionally complete solution. Future work could involve more advanced CNN architectures, data augmentation, and optimization for real-time deployment.
+
+\end{document}
